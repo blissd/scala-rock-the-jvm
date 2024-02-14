@@ -10,29 +10,33 @@ abstract class LList[A] {
   def isEmpty: Boolean
   def add(element: A): LList[A] = new Cons(element, this)
 
-  def map[B](t: Transformer[A, B]): LList[B] = {
-    def loop(remainder: LList[A]): LList[B] = {
-      if (remainder.isEmpty) new Empty
-      else Cons(t.transform(remainder.head), loop(remainder.tail))
-    }
+  def map[B](t: Transformer[A, B]): LList[B]
+  def filter(p: Predicate[A]): LList[A]
+  def flatMap[B](f: Transformer[A, LList[B]]): LList[B]
+}
 
-    loop(this)
+class Cons[A](override val head: A, override val tail: LList[A]) extends LList[A] {
+
+  override def isEmpty: Boolean = false
+
+  override def toString: String = {
+    @tailrec
+    def concatenateElements(remainder: LList[A], acc: String): String = {
+      if (remainder.isEmpty) acc
+      else concatenateElements(remainder.tail, s"$acc, ${remainder.head}")
+    }
+    s"[${concatenateElements(this.tail, s"$head")}]"
   }
 
+  def map[B](t: Transformer[A, B]): LList[B] = Cons(t.transform(head), tail.map(t))
+
   def filter(p: Predicate[A]): LList[A] = {
-    def loop(remainder: LList[A]): LList[A] = {
-      if (remainder.isEmpty) remainder
-      else if (p.test(remainder.head)) {
-        val rest = loop(remainder.tail)
-        Cons(remainder.head, rest)
-      }
-      else loop(remainder.tail)
-    }
-    loop(this)
+    if (p.test(head)) Cons(head, tail.filter(p))
+    else tail.filter(p)
   }
 
   def flatMap[B](f: Transformer[A, LList[B]]): LList[B] = {
-    
+
     def concat(left: LList[B], right: LList[B]): LList[B] = {
       if (left.isEmpty) right
       else if (left.tail.isEmpty) new Cons(left.head, right)
@@ -42,30 +46,7 @@ abstract class LList[A] {
       }
     }
 
-    def loop(remainder: LList[A]): LList[B] = {
-      if (remainder.isEmpty) {
-        new Empty[B]
-      } else {
-        val rest = loop(remainder.tail)
-        val front = f.transform(remainder.head)
-        concat(front, rest)
-      }
-    }
-
-    loop(this)
-  }
-}
-
-class Cons[A](override val head: A, override val tail: LList[A]) extends LList[A] {
-
-  override def isEmpty: Boolean = false
-  override def toString: String = {
-    @tailrec
-    def concatenateElements(remainder: LList[A], acc: String): String = {
-      if (remainder.isEmpty) acc
-      else concatenateElements(remainder.tail, s"$acc, ${remainder.head}")
-    }
-    s"[${concatenateElements(this.tail, s"$head")}]"
+    concat(f.transform(head), tail.flatMap(f))
   }
 }
 
@@ -77,6 +58,9 @@ class Empty[A] extends LList[A] {
 
   override def isEmpty: Boolean = true
   override def toString: String = "[]"
+  def map[B](t: Transformer[A, B]): LList[B] = new Empty
+  def filter(p: Predicate[A]): LList[A] = this
+  def flatMap[B](f: Transformer[A, LList[B]]): LList[B] = new Empty
 }
 
 /*
