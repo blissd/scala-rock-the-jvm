@@ -10,6 +10,8 @@ abstract class LList[A] {
   def isEmpty: Boolean
   def add(element: A): LList[A] = new Cons(element, this)
 
+  def concat(other: LList[A]): LList[A]
+
   def map[B](t: Transformer[A, B]): LList[B]
   def filter(p: Predicate[A]): LList[A]
   def flatMap[B](f: Transformer[A, LList[B]]): LList[B]
@@ -28,6 +30,9 @@ class Cons[A](override val head: A, override val tail: LList[A]) extends LList[A
     s"[${concatenateElements(this.tail, s"$head")}]"
   }
 
+
+  def concat(other: LList[A]): LList[A] = Cons(head, tail.concat(other))
+
   def map[B](t: Transformer[A, B]): LList[B] = Cons(t.transform(head), tail.map(t))
 
   def filter(p: Predicate[A]): LList[A] = {
@@ -35,19 +40,9 @@ class Cons[A](override val head: A, override val tail: LList[A]) extends LList[A
     else tail.filter(p)
   }
 
-  def flatMap[B](f: Transformer[A, LList[B]]): LList[B] = {
+  def flatMap[B](f: Transformer[A, LList[B]]): LList[B] =
+    f.transform(head).concat(tail.flatMap(f))
 
-    def concat(left: LList[B], right: LList[B]): LList[B] = {
-      if (left.isEmpty) right
-      else if (left.tail.isEmpty) new Cons(left.head, right)
-      else {
-        val rest = concat(left.tail, right)
-        new Cons(left.head, rest)
-      }
-    }
-
-    concat(f.transform(head), tail.flatMap(f))
-  }
 }
 
 class Empty[A] extends LList[A] {
@@ -58,6 +53,8 @@ class Empty[A] extends LList[A] {
 
   override def isEmpty: Boolean = true
   override def toString: String = "[]"
+
+  def concat(other: LList[A]): LList[A] = other
   def map[B](t: Transformer[A, B]): LList[B] = new Empty
   def filter(p: Predicate[A]): LList[A] = this
   def flatMap[B](f: Transformer[A, LList[B]]): LList[B] = new Empty
