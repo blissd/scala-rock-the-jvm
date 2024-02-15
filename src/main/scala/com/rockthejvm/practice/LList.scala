@@ -8,7 +8,7 @@ abstract class LList[A] {
   def head: A
   def tail: LList[A]
   def isEmpty: Boolean
-  def add(element: A): LList[A] = new Cons(element, this)
+  def add(element: A): LList[A] = Cons(element, this)
 
   def concat(other: LList[A]): LList[A]
 
@@ -17,7 +17,7 @@ abstract class LList[A] {
   def flatMap[B](f: Transformer[A, LList[B]]): LList[B]
 }
 
-class Cons[A](override val head: A, override val tail: LList[A]) extends LList[A] {
+case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
 
   override def isEmpty: Boolean = false
 
@@ -45,7 +45,7 @@ class Cons[A](override val head: A, override val tail: LList[A]) extends LList[A
 
 }
 
-class Empty[A] extends LList[A] {
+case class Empty[A]() extends LList[A] {
 
   override def head: A = throw new NoSuchElementException()
 
@@ -55,15 +55,15 @@ class Empty[A] extends LList[A] {
   override def toString: String = "[]"
 
   def concat(other: LList[A]): LList[A] = other
-  def map[B](t: Transformer[A, B]): LList[B] = new Empty
+  def map[B](t: Transformer[A, B]): LList[B] = Empty()
   def filter(p: Predicate[A]): LList[A] = this
-  def flatMap[B](f: Transformer[A, LList[B]]): LList[B] = new Empty
+  def flatMap[B](f: Transformer[A, LList[B]]): LList[B] = Empty()
 }
 
 /*
 Exercise: LList extension.
 
-1. Generic trait Predicate[T] wiht a little test(T) => Boolean.
+1. Generic trait Predicate[T] with a little test(T) => Boolean.
 2. Generic trait Transformer[A, B] with a method named transform(A) => B
 3. LList
  - map(transformer) => LList
@@ -98,18 +98,18 @@ trait Transformer[A, B] {
 
 object LListTest {
   def main(args: Array[String]): Unit = {
-    val empty = new Empty[Int]
+    val empty = Empty[Int]()
     println(empty)
     println(empty.isEmpty)
 
-    val first3Numbers = new Cons(1, new Cons(2, new Cons(3, empty)))
+    val first3Numbers = Cons(1, Cons(2, Cons(3, empty)))
     println(first3Numbers)
 
     val first3Numbers_v2 = empty.add(1).add(2).add(3)
     println(first3Numbers_v2)
     println(first3Numbers_v2.isEmpty)
 
-    val someStrings = new Cons("dog", new Cons("cat", new Empty))
+    val someStrings = Cons("dog", Cons("cat", Empty()))
     println(someStrings)
 
     /*
@@ -121,11 +121,11 @@ object LListTest {
     val mappedList = first3Numbers.map((a: Int) => a * 2)
     println(s"map = $mappedList")
 
-    val first4Numbers = new Cons(1, new Cons(2, new Cons(3, new Cons(4, new Empty))))
+    val first4Numbers = Cons(1, Cons(2, Cons(3, Cons(4, Empty()))))
     val filteredList = first4Numbers.filter(EvenPredicate)
     println(s"filter = $filteredList")
 
-    val flatMappedList = first3Numbers.flatMap((a: Int) => Cons(a, Cons(a + 1, new Empty)))
+    val flatMappedList = first3Numbers.flatMap((a: Int) => Cons(a, Cons(a + 1, Empty())))
     println(s"flatMap = $flatMappedList")
 
   }
