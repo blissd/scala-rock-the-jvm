@@ -128,5 +128,13 @@ object LListTest {
     val flatMappedList = first3Numbers.flatMap((a: Int) => Cons(a, Cons(a + 1, Empty())))
     println(s"flatMap = $flatMappedList")
 
+    // find test
+    def find[A](list: LList[A], predicate: Predicate[A]): A =
+      if (list.isEmpty) throw new NoSuchElementException
+      else if (predicate.test(list.head)) list.head
+      else find(list.tail, predicate)
+
+    println(find(first3Numbers, EvenPredicate))
+//    println(find(first3Numbers, (element: Int) => element > 5)) // NoSuchElementException
   }
 }
