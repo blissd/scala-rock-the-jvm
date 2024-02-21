@@ -12,9 +12,9 @@ abstract class LList[A] {
 
   def concat(other: LList[A]): LList[A]
 
-  def map[B](t: Transformer[A, B]): LList[B]
-  def filter(p: Predicate[A]): LList[A]
-  def flatMap[B](f: Transformer[A, LList[B]]): LList[B]
+  def map[B](t: A => B): LList[B]
+  def filter(p: A => Boolean): LList[A]
+  def flatMap[B](f: A => LList[B]): LList[B]
 }
 
 case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
@@ -33,15 +33,15 @@ case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
 
   def concat(other: LList[A]): LList[A] = Cons(head, tail.concat(other))
 
-  def map[B](t: Transformer[A, B]): LList[B] = Cons(t.transform(head), tail.map(t))
+  def map[B](t: A => B): LList[B] = Cons(t(head), tail.map(t))
 
-  def filter(p: Predicate[A]): LList[A] = {
-    if (p.test(head)) Cons(head, tail.filter(p))
+  def filter(p: A => Boolean): LList[A] = {
+    if (p(head)) Cons(head, tail.filter(p))
     else tail.filter(p)
   }
 
-  def flatMap[B](f: Transformer[A, LList[B]]): LList[B] =
-    f.transform(head).concat(tail.flatMap(f))
+  def flatMap[B](f: A => LList[B]): LList[B] =
+    f(head).concat(tail.flatMap(f))
 
 }
 
@@ -55,9 +55,9 @@ case class Empty[A]() extends LList[A] {
   override def toString: String = "[]"
 
   def concat(other: LList[A]): LList[A] = other
-  def map[B](t: Transformer[A, B]): LList[B] = Empty()
-  def filter(p: Predicate[A]): LList[A] = this
-  def flatMap[B](f: Transformer[A, LList[B]]): LList[B] = Empty()
+  def map[B](t: A => B): LList[B] = Empty()
+  def filter(p: A => Boolean): LList[A] = this
+  def flatMap[B](f: A => LList[B]): LList[B] = Empty()
 }
 
 /*
@@ -77,24 +77,6 @@ class StringToIntTransformer extends Transformer[String, Int]
 [1,2,3,4].filter(n % 2) = [2,4]
 [1,2,3].flatMap(n => [n, n+1]) => [1,2,2,3,3,4]
  */
-
-trait Predicate[T] {
-  def test(v: T): Boolean
-}
-
-object EvenPredicate extends Predicate[Int] {
-
-  override def test(v: Int): Boolean = v % 2 == 0
-}
-
-object StringToIntTransformer extends Transformer[String, Int] {
-
-  override def transform(a: String): Int = a.toInt
-}
-
-trait Transformer[A, B] {
-  def transform(a: A): B
-}
 
 object LListTest {
   def main(args: Array[String]): Unit = {
@@ -118,23 +100,29 @@ object LListTest {
 [1,2,3,4].filter(n % 2) = [2,4]
 [1,2,3].flatMap(n => [n, n+1]) => [1,2,2,3,3,4]
      */
+
+    val evenPredicate = (v: Int) => v % 2 == 0
+
+    val stringToIntTransformer = (v: String) => v.toInt
+
     val mappedList = first3Numbers.map((a: Int) => a * 2)
     println(s"map = $mappedList")
 
     val first4Numbers = Cons(1, Cons(2, Cons(3, Cons(4, Empty()))))
-    val filteredList = first4Numbers.filter(EvenPredicate)
+    val filteredList = first4Numbers.filter(evenPredicate)
     println(s"filter = $filteredList")
 
     val flatMappedList = first3Numbers.flatMap((a: Int) => Cons(a, Cons(a + 1, Empty())))
     println(s"flatMap = $flatMappedList")
 
     // find test
-    def find[A](list: LList[A], predicate: Predicate[A]): A =
+    @tailrec
+    def find[A](list: LList[A], predicate: A => Boolean): A =
       if (list.isEmpty) throw new NoSuchElementException
-      else if (predicate.test(list.head)) list.head
+      else if (predicate(list.head)) list.head
       else find(list.tail, predicate)
 
-    println(find(first3Numbers, EvenPredicate))
+    println(find(first3Numbers, evenPredicate))
 //    println(find(first3Numbers, (element: Int) => element > 5)) // NoSuchElementException
   }
 }
