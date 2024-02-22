@@ -46,7 +46,7 @@ object WhatsAFunction {
 
   val concat = (a: String, b: String) => a + b
 
-  val funcFunc = (a: Int) => (b: Int) => a + b
+  val superAdder = (a: Int) => (b: Int) => a + b
   
   // function values != methods
 
@@ -55,10 +55,10 @@ object WhatsAFunction {
     println(concat("a", "b"))
 
     // currying
-    val f = funcFunc(1)
+    val f = superAdder(1)
     println(f(2))
 
-    val anAddition_v2 = funcFunc(2)(5)
+    val anAddition_v2 = superAdder(2)(5)
 
   }
 

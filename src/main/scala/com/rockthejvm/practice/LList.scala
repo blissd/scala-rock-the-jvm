@@ -94,6 +94,8 @@ object LListTest {
     val someStrings = Cons("dog", Cons("cat", Empty()))
     println(someStrings)
 
+    val first4Numbers = Cons(1, Cons(2, Cons(3, Cons(4, Empty()))))
+
     /*
 
 [1,2,3].map(n * 2) = [2,4,6]
@@ -101,19 +103,20 @@ object LListTest {
 [1,2,3].flatMap(n => [n, n+1]) => [1,2,2,3,3,4]
      */
 
-    val evenPredicate = (v: Int) => v % 2 == 0
+    // map testing
+    val numbersDoubled = first3Numbers.map(_ * 2)
+    println(s"numbersDoubled = $numbersDoubled")
 
-    val stringToIntTransformer = (v: String) => v.toInt
+    val numbersNested = first3Numbers.map(a => Cons(a, Cons(a + 1, Empty())))
+    println(s"numbersNested = $numbersNested")
 
-    val mappedList = first3Numbers.map((a: Int) => a * 2)
-    println(s"map = $mappedList")
+    // filter testing
+    val onlyEvenNumbers = first3Numbers.filter(_ % 2 == 0)
+    println(s"onlyEvenNumbers = $onlyEvenNumbers")
 
-    val first4Numbers = Cons(1, Cons(2, Cons(3, Cons(4, Empty()))))
-    val filteredList = first4Numbers.filter(evenPredicate)
-    println(s"filter = $filteredList")
-
-    val flatMappedList = first3Numbers.flatMap((a: Int) => Cons(a, Cons(a + 1, Empty())))
-    println(s"flatMap = $flatMappedList")
+    // flatMap testing
+    val flattenedList = first3Numbers.flatMap(a => Cons(a, Cons(a + 1, Empty())))
+    println(s"flattenedList = $flattenedList")
 
     // find test
     @tailrec
@@ -122,7 +125,7 @@ object LListTest {
       else if (predicate(list.head)) list.head
       else find(list.tail, predicate)
 
-    println(find(first3Numbers, evenPredicate))
+    println(find(first3Numbers, _ % 2 == 0))
 //    println(find(first3Numbers, (element: Int) => element > 5)) // NoSuchElementException
   }
 }
