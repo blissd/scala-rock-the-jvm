@@ -24,6 +24,7 @@ abstract class LList[A] {
 
   def foreach(f: A => Unit): Unit
   def sort(cmp: (A, A) => Int): LList[A]
+  def zipWith[B](other: LList[A], f: (A, A) => B): LList[B]
 }
 
 case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
@@ -76,6 +77,14 @@ case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
 
     insert(tail.sort(cmp))
   }
+
+  override def zipWith[B](other: LList[A], f: (A, A) => B): LList[B] = {
+    if (other.isEmpty) {
+      Empty()
+    } else {
+      Cons(f(head, other.head), tail.zipWith(other.tail, f))
+    }
+  }
 }
 
 case class Empty[A]() extends LList[A] {
@@ -100,6 +109,8 @@ case class Empty[A]() extends LList[A] {
   override def foreach(f: A => Unit): Unit = ()
 
   override def sort(cmp: (A, A) => Int): LList[A] = this
+
+  override def zipWith[B](other: LList[A], f: (A, A) => B): LList[B] = Empty()
 }
 
 /*
@@ -175,6 +186,9 @@ object LListTest {
     val first4NumbersUnsorted = empty.add(4).add(3).add(1).add(2)
     val sorted = first4NumbersUnsorted.sort((x, y) => x - y)
     println(s"sorted = $sorted")
+
+    val zipWith = first3Numbers.zipWith(first4Numbers, _ * _)
+    println(s"zipWith = $zipWith")
 
   }
 }
