@@ -6,15 +6,22 @@ import scala.annotation.tailrec
 // [1,2,3] = [1] -> [2] -> [3] -> |
 abstract class LList[A] {
   def head: A
+
   def tail: LList[A]
+
   def isEmpty: Boolean
+
   def add(element: A): LList[A] = Cons(element, this)
 
   def concat(other: LList[A]): LList[A]
 
   def map[B](t: A => B): LList[B]
+
   def filter(p: A => Boolean): LList[A]
+
   def flatMap[B](f: A => LList[B]): LList[B]
+
+  def foreach(f: A => Unit): Unit
 }
 
 case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
@@ -27,6 +34,7 @@ case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
       if (remainder.isEmpty) acc
       else concatenateElements(remainder.tail, s"$acc, ${remainder.head}")
     }
+
     s"[${concatenateElements(this.tail, s"$head")}]"
   }
 
@@ -43,6 +51,9 @@ case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
   def flatMap[B](f: A => LList[B]): LList[B] =
     f(head).concat(tail.flatMap(f))
 
+  override def foreach(f: A => Unit): Unit =
+    f(head)
+    tail.foreach(f)
 }
 
 case class Empty[A]() extends LList[A] {
@@ -52,12 +63,18 @@ case class Empty[A]() extends LList[A] {
   override def tail: LList[A] = this
 
   override def isEmpty: Boolean = true
+
   override def toString: String = "[]"
 
   def concat(other: LList[A]): LList[A] = other
+
   def map[B](t: A => B): LList[B] = Empty()
+
   def filter(p: A => Boolean): LList[A] = this
+
   def flatMap[B](f: A => LList[B]): LList[B] = Empty()
+
+  override def foreach(f: A => Unit): Unit = ()
 }
 
 /*
@@ -126,6 +143,8 @@ object LListTest {
       else find(list.tail, predicate)
 
     println(find(first3Numbers, _ % 2 == 0))
-//    println(find(first3Numbers, (element: Int) => element > 5)) // NoSuchElementException
+    //    println(find(first3Numbers, (element: Int) => element > 5)) // NoSuchElementException
+
+    first4Numbers.foreach(x => println(s"foreach: $x"))
   }
 }
