@@ -1,6 +1,6 @@
 package com.rockthejvm.practice
 
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, targetName}
 
 // singling linked list
 // [1,2,3] = [1] -> [2] -> [3] -> |
@@ -13,7 +13,8 @@ abstract class LList[A] {
 
   def add(element: A): LList[A] = Cons(element, this)
 
-  def concat(other: LList[A]): LList[A]
+  @targetName("concat")
+  infix def ++(other: LList[A]): LList[A]
 
   def map[B](t: A => B): LList[B]
 
@@ -22,6 +23,7 @@ abstract class LList[A] {
   def flatMap[B](f: A => LList[B]): LList[B]
 
   def foreach(f: A => Unit): Unit
+  def sort(cmp: (A, A) => Int): LList[A]
 }
 
 case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
@@ -39,7 +41,8 @@ case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
   }
 
 
-  def concat(other: LList[A]): LList[A] = Cons(head, tail.concat(other))
+  @targetName("concat")
+  infix override def ++(other: LList[A]): LList[A] = Cons(head, tail ++ other)
 
   def map[B](t: A => B): LList[B] = Cons(t(head), tail.map(t))
 
@@ -49,11 +52,30 @@ case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
   }
 
   def flatMap[B](f: A => LList[B]): LList[B] =
-    f(head).concat(tail.flatMap(f))
+    f(head) ++ tail.flatMap(f)
 
   override def foreach(f: A => Unit): Unit =
     f(head)
     tail.foreach(f)
+
+  override def sort(cmp: (A, A) => Int): LList[A] = {
+
+    // left and right are both sorted
+    def insert(sorted: LList[A]): LList[A] = {
+      if (sorted.isEmpty) {
+        Cons(head, Empty())
+      } else {
+        val result = cmp(head, sorted.head)
+        if (result <= 0) {
+          Cons(head, sorted)
+        } else {
+          Cons(sorted.head, insert(sorted.tail))
+        }
+      }
+    }
+
+    insert(tail.sort(cmp))
+  }
 }
 
 case class Empty[A]() extends LList[A] {
@@ -66,7 +88,8 @@ case class Empty[A]() extends LList[A] {
 
   override def toString: String = "[]"
 
-  def concat(other: LList[A]): LList[A] = other
+  @targetName("concat")
+  infix override def ++(other: LList[A]): LList[A] = other
 
   def map[B](t: A => B): LList[B] = Empty()
 
@@ -75,6 +98,8 @@ case class Empty[A]() extends LList[A] {
   def flatMap[B](f: A => LList[B]): LList[B] = Empty()
 
   override def foreach(f: A => Unit): Unit = ()
+
+  override def sort(cmp: (A, A) => Int): LList[A] = this
 }
 
 /*
@@ -146,5 +171,10 @@ object LListTest {
     //    println(find(first3Numbers, (element: Int) => element > 5)) // NoSuchElementException
 
     first4Numbers.foreach(x => println(s"foreach: $x"))
+
+    val first4NumbersUnsorted = empty.add(4).add(3).add(1).add(2)
+    val sorted = first4NumbersUnsorted.sort((x, y) => x - y)
+    println(s"sorted = $sorted")
+
   }
 }
