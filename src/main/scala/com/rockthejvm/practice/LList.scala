@@ -23,8 +23,11 @@ abstract class LList[A] {
   def flatMap[B](f: A => LList[B]): LList[B]
 
   def foreach(f: A => Unit): Unit
+
   def sort(cmp: (A, A) => Int): LList[A]
-  def zipWith[B](other: LList[A], f: (A, A) => B): LList[B]
+
+  def zipWith[B, T](other: LList[T], f: (A, T) => B): LList[B]
+
   def foldLeft[B](start: B)(f: (A, B) => B): B
 
 }
@@ -67,20 +70,17 @@ case class Cons[A](head: A, tail: LList[A]) extends LList[A] {
     def insert(sorted: LList[A]): LList[A] = {
       if (sorted.isEmpty) {
         Cons(head, Empty())
+      } else if (cmp(head, sorted.head) <= 0) {
+        Cons(head, sorted)
       } else {
-        val result = cmp(head, sorted.head)
-        if (result <= 0) {
-          Cons(head, sorted)
-        } else {
-          Cons(sorted.head, insert(sorted.tail))
-        }
+        Cons(sorted.head, insert(sorted.tail))
       }
     }
 
     insert(tail.sort(cmp))
   }
 
-  override def zipWith[B](other: LList[A], f: (A, A) => B): LList[B] = {
+  override def zipWith[B, T](other: LList[T], f: (A, T) => B): LList[B] = {
     if (other.isEmpty) {
       Empty()
     } else {
@@ -117,7 +117,7 @@ case class Empty[A]() extends LList[A] {
 
   override def sort(cmp: (A, A) => Int): LList[A] = this
 
-  override def zipWith[B](other: LList[A], f: (A, A) => B): LList[B] = Empty()
+  override def zipWith[B, T](other: LList[T], f: (A, T) => B): LList[B] = Empty()
 
   override def foldLeft[B](start: B)(f: (A, B) => B): B = start
 }
