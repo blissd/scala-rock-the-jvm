@@ -19,7 +19,7 @@ object HOFsCurrying {
   @tailrec
   def nTimes(f: Int => Int, n: Int, x: Int): Int =
     if (n <= 0) x
-    else nTimes(f, n-1, f(x))
+    else nTimes(f, n - 1, f(x))
 
   val plusOne = (x: Int) => x + 1
   val tenThousand = nTimes(plusOne, 10_000, 0)
@@ -38,7 +38,7 @@ object HOFsCurrying {
    */
   def nTimes_v2(f: Int => Int, n: Int): Int => Int =
     if (n <= 0) (x: Int) => x
-    else (x: Int) => nTimes_v2(f, n-1)(f(x))
+    else (x: Int) => nTimes_v2(f, n - 1)(f(x))
 
   val plusOneHundred = nTimes_v2(plusOne, 100) // po(po(po(po(... risks stack overflow
   val oneHundred = plusOneHundred(0)
@@ -68,13 +68,57 @@ object HOFsCurrying {
    *
    *  - foldLeft[B](start: B)((A, B) => B): B
    *    [1,2,3,4].foldLeft[Int](0)((x, y) => x + y): Int
+   *
+   * 2. toCurry(f: (Int, Int) => Int): Int => Int => Int
+   * fromCurry(f: Int => Int => Int): (Int, Int) => Int
+   *
+   * 3. compose(f, g) => x => f(g(x))
+   * andThen(f, g) => x => g(f(x))
    */
+
+  def add(x: Int, y: Int): Int = x + y
+
+  def toCurry[A, B, C](f: (A, B) => C): A => B => C = {
+    a  => b  => f(a, b)
+  }
+
+  val superAdder_v2 = toCurry[Int, Int, Int](_ + _) // same as superAdder
+
+  def fromCurry[A, B, C](f: A => B => C): (A, B) => C = {
+    (a, b) => f(a)(b)
+  }
+
+  val simpleAdder = fromCurry(superAdder)
+
+  def compose[A, B, C](f: B => C, g: A => B): A => C = {
+    (a: A) => f(g(a))
+  }
+
+  def andThen[A, B, C](f: C => B, g: B => A): C => A = {
+    (c: C) => g(f(c))
+  }
+
+  val incrementer = (x: Int) => x + 1
+  def doubler = (x: Int) => 2 * x
+  val composedApplication = compose(incrementer, doubler)
+  val aSequenceApplication = andThen(incrementer, doubler)
 
   def main(args: Array[String]): Unit = {
     println(tenThousand)
     println(oneHundred)
     println(standardFormat(Math.PI))
     println(preciseFormat(Math.PI))
+
+    println(s"add(3,4) = ${add(3, 4)}")
+
+    val curryAdd = toCurry(add)
+    println(s"curryAdd(3)(4) = ${curryAdd(3)(4)}")
+
+    val uncurriedAdd = fromCurry(curryAdd)
+    println(s"uncurriedAdd = ${uncurriedAdd(3, 4)}")
+
+    println(s"composedApplication(14) = ${composedApplication(14)}")
+    println(s"aSequenceApplication(14) = ${aSequenceApplication(14)}")
   }
 
 }
