@@ -19,6 +19,7 @@ abstract class LList[A] {
   def map[B](t: A => B): LList[B]
 
   def filter(p: A => Boolean): LList[A]
+  def withFilter(p: A => Boolean): LList[A] = filter(p)
 
   def flatMap[B](f: A => LList[B]): LList[B]
 
@@ -201,6 +202,13 @@ object LListTest {
 
     val foldLeft = first4Numbers.foldLeft(0)(_ + _)
     println(s"foldLeft = $foldLeft")
+
+    // for-comprehension
+    val itemsWithLabel = for {
+      n <- first4Numbers
+    } yield s"Item=$n"
+
+    println(s"for-comprehension = $itemsWithLabel")
 
   }
 }
