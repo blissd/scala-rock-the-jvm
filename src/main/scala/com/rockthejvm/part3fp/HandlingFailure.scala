@@ -54,29 +54,35 @@ object HandlingFailure {
 
   class Connection {
     val random = new Random()
-    def get(url: String): String = {
+    def get(url: String): Try[String] = {
       if (random.nextBoolean()) {
-        "<html>Success</html>"
+        Success("<html>Success</html>")
       } else {
-        throw new RuntimeException("Cannot fetch page right now")
+        Failure(new RuntimeException("Cannot fetch page right now"))
       }
     }
   }
 
   object HttpService {
     val random = new Random()
-    def getConnection(host: String, port: String): Connection = {
+    def getConnection(host: String, port: String): Try[Connection] = {
       if (random.nextBoolean()) {
-        new Connection()
+        Success(new Connection())
       } else {
-        throw new RuntimeException("Cannot access host/port combination")
+        Failure(new RuntimeException("Cannot access host/port combination"))
       }
     }
-
   }
 
   def main(args: Array[String]): Unit = {
-
+    
+    val conn = HttpService.getConnection("server", "1234")
+    val page = conn.flatMap(c => c.get("https://www.example.com"))
+    
+    page match {
+      case Success(text) => println(text)
+      case Failure(e) => println(s"Failed with: ${e.getMessage}")
+    }
   }
 
 }
